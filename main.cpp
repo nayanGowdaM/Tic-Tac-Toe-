@@ -1,145 +1,179 @@
 #include<bits/stdc++.h>
 using namespace std;
-
-class Tictactoe{
-    int board[3][3];
-    public:
-        Tictactoe(){
-            memset(board, -1, sizeof(board));
-        }
-        void printBoard(){
-            for( int i=0;i<=2;i++){
-                for(int j=0;j<=2; j++){
-                    cout<<"\t" << board[i][j];
-                    if(j!=2)
-                    cout<<"\t|";
-                    
-                }
-                cout<<endl;
-                if(i!=2)
-                cout<<"-------------------------------------------";
-                cout<<endl;
-            }
-        }
-
-        void set(int i, int j, int player){
-            board[i][j] = player;
-        }
-
-        bool isFull(){
-            for( int i=0;i<=2;i++) 
-                for( int j=0;j<=2;j++) 
-                    if(board[i][j]==-1) return false;
-            return true;
-        }
-
-        bool isWinner(int player){
-            if((board[0][0]==player && board[1][1]==player && board[2][2]==player) ||
-                (board[0][2]==player && board[1][1]==player && board[2][0]==player ))
-                    return true;
-            for(int i=0;i<=2;i++){
-                if((board[i][0]==player && board[i][1]==player && board[i][2]==player ) ||
-                    (board[0][i]==player && board[1][i]==player && board[2][i]==player)) 
-                        return true;
-            }
-            return false;
-        }
-
-        vector<pair<int,int>> getEmptyCells(){
-            vector<pair<int,int>> list;
-            for(int i=0;i<=2;i++)
-                for( int j=0;j<=2;j++) 
-                    if(board[i][j]==-1)
-                        list.push_back({i,j});
-            return list;
-        }
-
-        bool gameover(){
-            if(isFull() || isWinner(0) || isWinner(1)) return true;
-            else return false;
-        }
-
-        bool isValid( int i, int j){
-            if(i>=0 &&  i<3 && j>=0 && j<3)
-            return board[i][j]==-1;
-            else return false;
-        }
+enum class PieceType {
+    X,
+    O,
+    None
 };
 
-void diplaychoice(){
-    cout<<"Enter \n";
-    cout<<"1. View Board\n2.Mark the board\n";
+
+static char pieceTypeToChar(PieceType pieceType){
+    char ans;
+    if(pieceType==PieceType::None) 
+        ans=' ';
+    else if(pieceType==PieceType::O)
+        ans='O';
+    else if( pieceType==PieceType::X)
+        ans='X';
+    return ans;
 }
+class PlayingPiece{
+    public:
+    PieceType piecetype;
+    PlayingPiece(): piecetype(PieceType::None){}
+    PlayingPiece(PieceType piecetype){
+        this->piecetype=piecetype;
+    }
+
+};
+
+class PlayingPieceO : PlayingPiece{
+    public:
+    PlayingPieceO():PlayingPiece(PieceType::O){
+        
+    }
+};
+
+class PlayingPieceX : PlayingPiece{
+    public:
+    PlayingPieceX():PlayingPiece(PieceType::X){
+        
+    }
+};
+
+
+class Board{
+    public :
+    int size;
+    vector<vector<PieceType>> board;
+    Board(){}
+    Board(int size): size(size), board(size, vector<PieceType>(size, PieceType::None)){}
+
+    void printBoard() const {
+        cout<<endl;
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                cout<<pieceTypeToChar(board[i][j])<<" ";
+                std::cout << " | ";
+            }
+            std::cout << std::endl;
+        }
+    }
+
+    vector<pair<int,int>> getFreeCells(){
+        vector<pair<int,int>> freeCells;
+        for( int i=0;i<size;i++){
+            for( int j=0;j<size;j++){
+                if(board[i][j]==PieceType::None);
+                freeCells.push_back({i,j});
+            }
+        }
+        return freeCells;
+    }
+
+    bool addPiece(int row, int col, PieceType playingPiece){
+        if(board[row][col]!=PieceType::None) return false;
+        board[row][col]=playingPiece;
+        return true;
+    }
+};
+
+
+class Player{
+    public:
+    string name;
+    PlayingPiece playingPiece;
+
+    Player( string name, PlayingPiece playingPiece ): name(name) , playingPiece(playingPiece){}
+};
+
+
+class TicTacToe{
+public:
+    deque<Player> players;
+    Board gameboard;
+
+    TicTacToe(){
+
+        players.push_back(Player("Player1", PlayingPiece(PieceType::X)));
+        players.push_back(Player("Player2", PlayingPiece(PieceType::O)));
+        gameboard=Board(3);
+    }
+
+    TicTacToe(int size, string name1, string name2){
+
+        players.push_back(Player(name1, PlayingPiece(PieceType::X)));
+        players.push_back(Player(name2, PlayingPiece(PieceType::O)));
+        gameboard=Board(size);
+    }
+
+    bool isThereWinner( int row, int col, PieceType pieceType){
+        bool rowMatch=true;
+        bool colMatch=true;
+        bool diaMatch=true;
+        bool antiDiamatch=true;
+
+        for( int i=0;i<gameboard.size;i++){
+            if(gameboard.board[row][i]==PieceType::None || gameboard.board[row][i]!=pieceType)
+                rowMatch=false;
+        }
+        for( int i=0;i<gameboard.size;i++){
+            if(gameboard.board[i][col]==PieceType::None || gameboard.board[i][col]!=pieceType)
+                colMatch=false;
+        }
+        for( int i=0, j=0;i<gameboard.size;i++, j++){
+            if(gameboard.board[i][j]==PieceType::None || gameboard.board[i][j]!=pieceType)
+                diaMatch=false;
+        }
+        for( int i=0, j=gameboard.size-1;i<gameboard.size;i++, j--){
+            if(gameboard.board[i][j]==PieceType::None || gameboard.board[i][j]!=pieceType)
+                antiDiamatch=false;
+        }
+
+        return rowMatch||colMatch||diaMatch||antiDiamatch;
+    }
+
+    string startGame(){
+        bool noWinner = true;
+        while(noWinner){
+            Player playerTurn = players.front();
+            players.pop_front();
+
+            gameboard.printBoard();
+            vector<pair<int,int>>freeSpaces=gameboard.getFreeCells();
+            if(freeSpaces.size()==0){
+                noWinner=false;
+                continue;
+            }
+
+            //Read The user input 
+            cout<<"Player: "+playerTurn.name+"\nEnter the row number:";
+            int row, col;
+            cin>>row;
+            cout<<"Enter the column number: ";
+            cin>>col;
+
+            //Placing The piece 
+            bool pieceAddedSuccesfully=gameboard.addPiece(row,col,playerTurn.playingPiece.piecetype);
+            if(!pieceAddedSuccesfully){
+                cout<<"Incorredt possition chosen, try again";
+                players.push_front(playerTurn);
+                continue;
+            }
+            players.push_back(playerTurn);
+            bool winner = isThereWinner(row, col, playerTurn.playingPiece.piecetype);
+            if(winner){
+                return playerTurn.name;
+            }
+        }
+        return "Tie";
+    }
+};
+
 
 int main(){
-    Tictactoe game;
-    int player1, player2;
-    cout<<"Enter the choice of Player 1: ";
-    cin>>player1;
-    if(player1==1){
-        cout<<"Player 2 choice is "<< 0<<endl;
-        player2=0;
-    }
-    else {
-        cout<<"Player 2 choice is "<< 1<<endl;
-        player2=1;
-    }
-        
-    bool turn = true;
-    diplaychoice();
-    while(!game.gameover()){
-        int choice;
-        if(turn){
-            cout<<"Player1's Turn!!\n";
-        }
-        else{
-            cout<<"Player2's Turn!!\n";
-        }
-        cout<<"Enter your Choice: ";
-        cin>>choice;
-        if(choice==1){
-            game.printBoard();
-        }
-        else{
-            int x=-1,y=-1;
-            while(!game.isValid(x,y)){
-                cout<<"Give the location of the mark:\nx: ";
-                cin>>x;
-                cout<<"y: ";
-                cin>>y;
-            }
-            if(turn){
-                game.set(x,y,player1);
-                if(game.isWinner(player1)){
-                    game.printBoard();
-                    cout<<endl;
-                    cout<<"Player 1 Wins\n";
-                    return 0;
-                }
-                else if(game.isFull()){
-                    cout<<"Game drawed\n";
-                    return 0;
-                }
-    
-            }
-            else {
-                game.set(x,y,player2);
-                if(game.isWinner(player2)){
-                    game.printBoard();
-                    cout<<endl;
-                    cout<<"Player 2 Wins\n";
-                    return 0;
-                }
-                else if(game.isFull()){
-                    cout<<"Game drawed\n";
-                    return 0;
-                }
-    
-            }
-            turn = !turn ;
+    TicTacToe game;
+    string winner = game.startGame();
+    cout<<"The winner is : " << winner<<endl; 
 
-
-        }
-
-    }
 }
